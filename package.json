@@ -1,0 +1,43 @@
+{
+  "name": "dsh-session-switch",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 会话切换插件：Host 半边接 dsh-auto-handoff 的请求建新会话、把交接包作为第一条消息发进去、把待接写给客户端切界面并归档原会话；Client 半边是空壳。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "client.js",
+    "cordis.patch.yml",
+    "switch-store.js",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "dsh-session-switch",
+    "deepseek-harness",
+    "session",
+    "handoff"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "*"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

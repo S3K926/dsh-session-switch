@@ -1,0 +1,18 @@
+# 本插件的 bundle patch 就长这样（`cordis.patch.yml` 的原样副本，方便照着抄进
+# 自己的 profile patch）。两种用法：
+#
+# ① 把本包当成 bundle 装（推荐）：包内的 cordis.patch.yml 会被自动读，
+#    不需要手工改任何文件。
+#
+# ② 手工插一行：把下面这段 `- insert:` 追加到
+#    `~/.dsh/profiles/<profile>/cordis.patch.yml` 的数组里。
+#    那个文件**顶层是数组**，注释头之后是 `[]`；有内容时要保持缩进。
+#
+# 本插件不声明 Config（没有可校验的配置项），所以这里不要写 `config:` ——
+# 写了也不会被读，只会让下一个人以为改它有用。
+#
+# 状态目录换地方用环境变量，不要写进 patch（见 README「状态目录」一节）：
+# 写死绝对路径会让别人的机器指向不存在的目录。
+- insert:
+    - id: dsh-session-switch
+      name: dsh-session-switch

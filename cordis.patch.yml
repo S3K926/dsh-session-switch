@@ -1,0 +1,14 @@
+# dsh-session-switch 的 bundle patch：插入一行 Host 插件。
+#
+# `name` 必须是**实际包名**（cordis 按 name import 包）。写错会变成
+# `Cannot find package '...'`，新装用户直接起不来。
+#
+# 纯 insert（只有 id/name、没有 config）可以热挂载，不用重启。
+#
+# 本插件不声明 Config，所以这里没有 `config:`。
+# 状态目录默认 `~/.dsh/session-switch`，要换地方就设环境变量
+# `DSH_SESSION_SWITCH_DIR`——**不要**把某台机器的绝对路径写进这里，
+# 否则别的机器装上去就指向不存在的目录（dsh-meme 踩过一模一样的坑）。
+- insert:
+    - id: dsh-session-switch
+      name: dsh-session-switch
