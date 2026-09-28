@@ -29,11 +29,22 @@ export const MAX_PENDING_AGE_MS = 2 * 60 * 60 * 1000;
 // 状态目录与文件
 // ---------------------------------------------------------------------------
 
-/** 状态目录：环境变量优先，默认 `~/.dsh/session-switch`。 */
+/**
+ * Harness 家目录：`$DSH_HOME` 优先，缺省才回落 `~/.dsh`。
+ * 为什么必须认 DSH_HOME：便携 U 盘/多实例部署时家目录不在 `~/.dsh`，
+ * 写死就会把状态写到宿主机家目录里，跟着盘走的东西反而留在别人电脑上。
+ */
+export function harnessHome() {
+	const override = process.env.DSH_HOME;
+	if (typeof override === 'string' && override.trim() !== '') return override.trim();
+	return join(homedir(), '.dsh');
+}
+
+/** 状态目录：环境变量优先，其次 `$DSH_HOME/session-switch`，最后 `~/.dsh/session-switch`。 */
 export function pendingDir() {
 	const override = process.env.DSH_SESSION_SWITCH_DIR;
 	if (typeof override === 'string' && override.trim() !== '') return override.trim();
-	return join(homedir(), '.dsh', 'session-switch');
+	return join(harnessHome(), 'session-switch');
 }
 
 /** 待接文件路径；`dir` 只是为了 selftest 能显式指定，正常运行不必传。 */

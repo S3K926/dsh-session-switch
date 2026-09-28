@@ -19,7 +19,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { BUDGET_MAX_PER_WINDOW, BUDGET_MAX_RECORDS, BUDGET_WINDOW_MS, MAX_PENDING_AGE_MS, PENDING_FIELDS, SOURCE_COOLDOWN_MS, appendLog, budgetFile, buildPending, checkHandoffGate, errorCode, errorMessage, llmModule, loadCreateUserMessage, logPath, makeLogger, noteHandoff, parseAt, pendingDir, pendingFile, readBudget, readPending, writeBudget, writeFileAtomic, writePending } from './switch-store.js';
+import { BUDGET_MAX_PER_WINDOW, BUDGET_MAX_RECORDS, BUDGET_WINDOW_MS, MAX_PENDING_AGE_MS, PENDING_FIELDS, SOURCE_COOLDOWN_MS, appendLog, budgetFile, buildPending, checkHandoffGate, errorCode, errorMessage, harnessHome, llmModule, loadCreateUserMessage, logPath, makeLogger, noteHandoff, parseAt, pendingDir, pendingFile, readBudget, readPending, writeBudget, writeFileAtomic, writePending } from './switch-store.js';
 
 /**
  * 造新会话第一条消息要用的 `createUserMessage`。
@@ -576,7 +576,8 @@ async function runSelfTest() {
 	}
 	const dir = resolve(override.trim());
 	// 双保险：就算环境变量指到了真家里，也在写任何东西之前掉头。
-	const liveHome = join(homedir(), '.dsh');
+	// 真家 = $DSH_HOME（便携/多实例下就是那台机器的 harness home），没设时才是 ~/.dsh。
+	const liveHome = harnessHome();
 	if (resolve(liveHome) === dir || dir.startsWith(`${resolve(liveHome)}\\`) || dir.startsWith(`${resolve(liveHome)}/`)) {
 		console.error(`✗ 拒绝在真实 DSH 家目录里自检：${dir}`);
 		return 1;

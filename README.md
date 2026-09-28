@@ -135,7 +135,10 @@ dsh-auto-handoff（管档案）              dsh-session-switch（管会话）
 
 ## 状态目录
 
-默认 `~/.dsh/session-switch/`，可用环境变量覆盖：
+默认 `$DSH_HOME/session-switch/`；**没设 `DSH_HOME` 时才回落到 `~/.dsh/session-switch/`**。
+（便携部署 / 多实例 / U 盘随身版都会设 `DSH_HOME`，这时状态跟着那个家走 —— 不会漏到宿主机家目录里。）
+
+还可用环境变量整体覆盖：
 
 ```powershell
 $env:DSH_SESSION_SWITCH_DIR = "D:\somewhere\session-switch"
