@@ -61,19 +61,80 @@ window.__ModuleLoader__.load({
       return binding && binding.props ? binding.props.inputActions : undefined
     }
 
+    /**
+     * 走**新 API** 拿输入动作（**两段式**，别只写第一段）：
+     *   ① \`ctx.sessions.using(sessionId, { source }, ref => …)\` 拿一个 Session 引用；
+     *   ② \`ctx.uiSession.bindingSource(ref).getSnapshot().props.inputActions\` 才是输入动作。
+     *
+     * 🔴 2026-10-01 修：老路依赖的 \`uiSession.resolve(sessionId)\` 在 DSH 升级后**已经不在 UiSession 上**
+     *   （现在只有 bindingSource / provide / registerPendingInteraction / sessionStatus），
+     *   所以点「换会话」只会打一句「这个会话还没挂上输入框」、什么都不发。
+     *   ⚠️ 还踩过一版：\`ref.binding.props\` —— \`ref.binding\` 是 SessionBinding，**它没有 props**；
+     *   props 在 StandardSourceBinding 上，取值用 \`getSnapshot()\`（照官方 dsh-client-ui-renderer 的用法）。
+     */
+    function withInputActions(ctx, session, text, fn) {
+      var sessionId = session && session.sessionId
+      if (sessionId === undefined || sessionId === null) {
+        console.warn(LOG + '「' + text + '」没发出去：命令里没有 sessionId')
+        return
+      }
+      var sessions
+      var uiSession
+      try {
+        sessions = ctx && typeof ctx.get === 'function' ? ctx.get('sessions') : undefined
+        uiSession = ctx && typeof ctx.get === 'function' ? ctx.get('uiSession') : undefined
+      } catch (error) {
+        sessions = undefined
+        uiSession = undefined
+      }
+      if (!sessions || typeof sessions.using !== 'function') {
+        console.warn(LOG + '「' + text + '」没发出去：拿不到 sessions 服务')
+        return
+      }
+      sessions
+        .using(sessionId, { source: 'session-switch-quick-word' }, function (ref) {
+          var actions
+          try {
+            var source = uiSession && typeof uiSession.bindingSource === 'function' ? uiSession.bindingSource(ref) : undefined
+            var binding = source && typeof source.getSnapshot === 'function' ? source.getSnapshot() : undefined
+            var props = binding ? binding.props : undefined
+            actions = props ? props.inputActions : undefined
+          } catch (error) {
+            console.warn(LOG + '取输入框失败：' + (error && error.message ? error.message : error))
+            return
+          }
+          if (actions === undefined || actions === null) {
+            console.warn(LOG + '「' + text + '」没发出去：这个会话还没挂上输入框')
+            return
+          }
+          fn(actions)
+        })
+        .catch(function (error) {
+          console.warn(LOG + '发送失败：' + (error && error.message ? error.message : error))
+        })
+    }
+
     /** 发一条词：写草稿 + 提交（提交走队列，正忙时会排队）。拿不到输入框就只留一行 warning。 */
-    function sendQuickWord(uiSession, session, text) {
-      var actions = inputActionsOf(uiSession, session && session.sessionId)
+    function sendQuickWord(first, session, text) {
+      var doSend = function (actions) {
+        try {
+          actions.setDraft(text)
+          actions.submit()
+        } catch (error) {
+          console.warn(LOG + '发送失败：' + (error && error.message ? error.message : error))
+        }
+      }
+      // 第一个参数是 ctx（带 .get）→ 走新 API；是 uiSession → 走老路（DSH 新版下老路会打警告）
+      if (first && typeof first.get === 'function') {
+        withInputActions(first, session, text, doSend)
+        return
+      }
+      var actions = inputActionsOf(first, session && session.sessionId)
       if (actions === undefined || actions === null) {
         console.warn(LOG + '「' + text + '」没发出去：这个会话还没挂上输入框')
         return
       }
-      try {
-        actions.setDraft(text)
-        actions.submit()
-      } catch (error) {
-        console.warn(LOG + '发送失败：' + (error && error.message ? error.message : error))
-      }
+      doSend(actions)
     }
 
     /**
@@ -82,7 +143,7 @@ window.__ModuleLoader__.load({
      */
     function apply(ctx) {
       try {
-        ctx.inject(['commandUi', 'uiSession'], function (scope) {
+        ctx.inject(['commandUi', 'uiSession', 'sessions'], function (scope) {
           try {
             scope.effect(function () {
               return scope.commandUi.register({
@@ -96,7 +157,7 @@ window.__ModuleLoader__.load({
                 ui: {
                   kind: 'action',
                   run: function (session) {
-                    sendQuickWord(scope.uiSession, session, '换会话')
+                    sendQuickWord(scope, session, '换会话')
                   },
                 },
               })
