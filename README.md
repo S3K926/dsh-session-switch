@@ -1,3 +1,12 @@
+> ⚠️ **本插件已并入 [`dsh-auto-handoff`](https://github.com/S3K926/dsh-auto-handoff)（2026-09-28）。**
+>
+> 会话切换那半现在是 auto-handoff 里的 `switch-session.js` / `switch-store.js`；**本仓库只作历史留存**。
+> ⚠ **不要再跟 auto-handoff 一起装** —— 两个都装会让「换会话」注册两次（`commandUi.register` 重名会 throw）、
+> 并且界面被切两次（这个坑它自己的注释里记着：*"两边各切一次，用户看到的是'跳到一半又跳一下'"*）。
+>
+> 2026-10-01 顺带修了本仓库 client.js 里那个已经失效的 `uiSession.resolve` 调用（DSH 升级后该 API 已移除），
+> 只为了让 clone 下来看的人不被旧写法误导；**插件本身仍建议直接用 auto-handoff**。
+
 <p align="center">
   <img src="assets/mascot.jpg" width="230" alt="大肥鱼">
 </p>
